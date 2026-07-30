@@ -250,17 +250,10 @@ a { color: inherit; text-decoration: none; }
   min-width: 0;
 }
 
-@media (max-width: 800px) {
-  .work-grid {
-    overflow-x: auto;
-    padding-bottom: 8px;
-    scroll-snap-type: x proximity;
-  }
-  .work-grid .card {
-    flex: 0 0 auto;
-    width: min(80vw, calc(var(--card-w) * 1px));
-    scroll-snap-align: start;
-  }
+@media (max-width: 560px) {
+  /* below this, even proportional cards get too narrow to read — stack instead */
+  .work-grid { flex-wrap: wrap; }
+  .work-grid .card { flex: 1 1 260px; }
 }
 
 /* ---------- Playground (masonry via columns) ---------- */
