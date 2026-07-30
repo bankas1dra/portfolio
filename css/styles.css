@@ -1,27 +1,29 @@
 /* ---------- Fonts ----------
-   The design uses GT Alpina Trial (headings/labels) and PP Neue Montreal (card titles).
-   Both are commercial trial fonts — grab the webfont files for personal/non-commercial
-   use from the foundries and drop them here:
-     - GT Alpina Trial:      https://www.grillitype.com/trial-fonts/gt-alpina
-     - PP Neue Montreal:     https://pangrampangram.com/products/neue-montreal (trial tab)
-   Put the .woff2 files in assets/fonts/ and uncomment the @font-face blocks below.
-   Until then the site falls back to close free alternatives (Fraunces / General Sans-ish stack). */
+   Trial webfonts used for this non-commercial portfolio, per foundry trial terms:
+     - GT Alpina Trial Condensed Regular Italic (Grilli Type) — headings/labels
+     - PP Neue Montreal Regular/Medium (Pangram Pangram) — body/card titles */
 
-/*
 @font-face {
   font-family: 'GT Alpina Trial';
-  src: url('../assets/fonts/GT-Alpina-Condensed-Regular-Italic.woff2') format('woff2');
+  src: url('../assets/fonts/GT-Alpina-Condensed-Regular-Italic-Trial.otf') format('opentype');
   font-style: italic;
   font-weight: 400;
   font-display: swap;
 }
 @font-face {
   font-family: 'PP Neue Montreal';
-  src: url('../assets/fonts/PPNeueMontreal-Medium.woff2') format('woff2');
+  src: url('../assets/fonts/NeueMontreal-Regular.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'PP Neue Montreal';
+  src: url('../assets/fonts/NeueMontreal-Medium.woff2') format('woff2');
+  font-style: normal;
   font-weight: 500;
   font-display: swap;
 }
-*/
 
 :root {
   --bg: #212121;
