@@ -1,0 +1,255 @@
+/* ---------- Fonts ----------
+   The design uses GT Alpina Trial (headings/labels) and PP Neue Montreal (card titles).
+   Both are commercial trial fonts — grab the webfont files for personal/non-commercial
+   use from the foundries and drop them here:
+     - GT Alpina Trial:      https://www.grillitype.com/trial-fonts/gt-alpina
+     - PP Neue Montreal:     https://pangrampangram.com/products/neue-montreal (trial tab)
+   Put the .woff2 files in assets/fonts/ and uncomment the @font-face blocks below.
+   Until then the site falls back to close free alternatives (Fraunces / General Sans-ish stack). */
+
+/*
+@font-face {
+  font-family: 'GT Alpina Trial';
+  src: url('../assets/fonts/GT-Alpina-Condensed-Regular-Italic.woff2') format('woff2');
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'PP Neue Montreal';
+  src: url('../assets/fonts/PPNeueMontreal-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-display: swap;
+}
+*/
+
+:root {
+  --bg: #212121;
+  --bg-deep: #0f0f0f;
+  --fg: #ffffff;
+  --fg-dim: rgba(255, 255, 255, 0.5);
+  --gap: 20px;
+  --container: 1240px;
+  --font-display: 'GT Alpina Trial', 'Fraunces', Georgia, serif;
+  --font-body: 'PP Neue Montreal', 'General Sans', Inter, Arial, sans-serif;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+img { display: block; max-width: 100%; }
+
+a { color: inherit; text-decoration: none; }
+
+/* ---------- Reveal-on-scroll ---------- */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.8s var(--ease), transform 0.8s var(--ease);
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ---------- Hero ---------- */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 40px;
+  padding: 40px 20px 80px;
+  text-align: center;
+}
+
+.hero__logo {
+  width: 220px;
+  animation: float 6s ease-in-out infinite;
+}
+.hero__logo img { width: 100%; height: auto; }
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.hero__tagline {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: clamp(18px, 2.4vw, 32px);
+  line-height: 1.3;
+  max-width: 620px;
+  color: var(--fg);
+}
+
+.hero__nav {
+  display: flex;
+  gap: 2px;
+  padding: 8px;
+}
+
+.hero__nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 20px;
+  border-radius: 19px;
+  opacity: 0.5;
+  transition: opacity 0.3s var(--ease), background-color 0.3s var(--ease);
+}
+.hero__nav-item:hover,
+.hero__nav-item.is-active {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.06);
+}
+.hero__nav-item img { filter: invert(1); }
+.hero__nav-item span {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 16px;
+  white-space: nowrap;
+}
+
+/* ---------- Sections ---------- */
+.section {
+  max-width: var(--container);
+  margin: 0 auto;
+  padding: 100px 20px 60px;
+}
+
+.section__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 40px;
+}
+
+.section__head h2 {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(24px, 3vw, 32px);
+  margin: 0;
+}
+
+.section__all {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 16px;
+  opacity: 0.7;
+  border-bottom: 1px dashed currentColor;
+  transition: opacity 0.3s var(--ease);
+}
+.section__all:hover { opacity: 1; }
+
+/* ---------- Selected Work ---------- */
+.work-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--gap);
+}
+
+.work-card {
+  position: relative;
+  display: block;
+  border-radius: 21px;
+  overflow: hidden;
+  aspect-ratio: var(--w) / var(--h);
+  background: #111;
+  transition: transform 0.5s var(--ease), box-shadow 0.5s var(--ease);
+}
+.work-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s var(--ease);
+}
+.work-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4);
+}
+.work-card:hover img { transform: scale(1.04); }
+
+/* card 3 (wide) spans two columns on larger screens */
+.work-card[style*="--w:810"] { grid-column: span 2; }
+@media (max-width: 720px) {
+  .work-card[style*="--w:810"] { grid-column: span 1; }
+}
+
+/* ---------- Playground (masonry via columns) ---------- */
+.playground-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--gap);
+  align-items: start;
+}
+
+.playground-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+
+.pg-card {
+  position: relative;
+  display: block;
+  border-radius: 20px;
+  overflow: hidden;
+  aspect-ratio: var(--w) / var(--h);
+  background: #111;
+  transition: transform 0.5s var(--ease), box-shadow 0.5s var(--ease);
+}
+.pg-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s var(--ease);
+}
+.pg-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+.pg-card:hover img { transform: scale(1.05); }
+
+@media (max-width: 900px) {
+  .playground-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 600px) {
+  .playground-grid { grid-template-columns: 1fr; }
+}
+
+/* ---------- Footer links ---------- */
+.links {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: var(--bg);
+}
+.links a {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 16px;
+  border-bottom: 1px dashed var(--fg);
+  padding-bottom: 2px;
+  transition: opacity 0.3s var(--ease);
+}
+.links a:hover { opacity: 0.6; }
+
+@media (max-width: 480px) {
+  .hero { gap: 28px; }
+  .hero__nav { flex-wrap: wrap; justify-content: center; }
+}
