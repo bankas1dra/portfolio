@@ -418,12 +418,19 @@ a { color: inherit; text-decoration: none; }
   aspect-ratio: 1240 / 666;
   cursor: ew-resize;
   user-select: none;
+  background: var(--card-bg, #111);
 }
+/* Before/after are two independently-sized, independently-cropped shot
+   windows (not a full-bleed pair) — position/size each from Figma's own
+   px values via --l/--t/--w/--h (percent of the 1240x666 reference), the
+   same pattern the homepage cards use. Forcing them to cover the whole
+   1240x666 box is what made the mockups look oversized. */
 .case-compare img {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
+  left: var(--l, 0);
+  top: var(--t, 0);
+  width: var(--w, 100%);
+  height: var(--h, 100%);
   object-fit: cover;
   border-radius: 0;
   pointer-events: none;
@@ -434,39 +441,47 @@ a { color: inherit; text-decoration: none; }
   top: 0;
   bottom: 0;
   left: 50%;
-  width: 2px;
-  background: rgba(255, 255, 255, 0.8);
-  transform: translateX(-1px);
+  width: 3px;
+  background: rgba(255, 255, 255, 0.85);
+  transform: translateX(-50%);
   pointer-events: none;
+  z-index: 2;
 }
 .case-compare__grip {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.9);
+  width: 44px;
+  height: 96px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
   transform: translate(-50%, -50%);
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
-  color: #111;
+  gap: 6px;
   pointer-events: none;
+  z-index: 3;
+}
+.case-compare__grip img { width: 18px; height: 18px; }
+.case-compare__grip span {
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: #111;
 }
 .case-compare__label {
   position: absolute;
-  top: 16px;
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.85);
-  background: rgba(0, 0, 0, 0.4);
-  padding: 4px 10px;
-  border-radius: 10px;
+  top: 3%;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 15px;
+  color: #fff;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
   z-index: 2;
 }
-.case-compare__label--before { left: 16px; }
-.case-compare__label--after { right: 16px; }
+.case-compare__label--before { left: 1.6%; }
+.case-compare__label--after { right: 1.6%; }
 
 .case-animation {
   aspect-ratio: 1240 / 860;
