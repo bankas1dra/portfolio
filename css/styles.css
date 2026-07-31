@@ -255,7 +255,10 @@ a { color: inherit; text-decoration: none; }
   cursor: grab;
   scrollbar-width: none;
   -ms-overflow-style: none;
+  user-select: none;
+  -webkit-user-select: none;
 }
+.work-grid img { -webkit-user-drag: none; user-drag: none; }
 .work-grid::-webkit-scrollbar { display: none; }
 .work-grid.is-dragging {
   cursor: grabbing;
