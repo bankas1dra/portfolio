@@ -1,43 +1,77 @@
+gsap.registerPlugin(ScrollTrigger);
+
+const EASE = 'expo.out';
+
 // Reveal-on-scroll for elements marked .reveal
-const revealTargets = document.querySelectorAll('.reveal');
-
-const revealObserver = new IntersectionObserver(
-  (entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('is-visible');
-        revealObserver.unobserve(entry.target);
-      }
-    });
-  },
-  { threshold: 0.15, rootMargin: '0px 0px -40px 0px' }
-);
-
-revealTargets.forEach((el, i) => {
-  el.style.transitionDelay = `${Math.min(i % 6, 5) * 60}ms`;
-  revealObserver.observe(el);
+gsap.set('.reveal', { y: 24 });
+gsap.utils.toArray('.reveal').forEach((el, i) => {
+  gsap.to(el, {
+    opacity: 1,
+    y: 0,
+    duration: 0.8,
+    ease: EASE,
+    delay: (i % 6) * 0.06,
+    scrollTrigger: {
+      trigger: el,
+      start: 'top 88%',
+      once: true,
+    },
+  });
 });
 
 // Highlight active nav item based on scrolled section
-const navItems = document.querySelectorAll('.hero__nav-item');
-const sections = [...navItems]
-  .map((item) => document.querySelector(item.getAttribute('href')))
-  .filter(Boolean);
+const navItems = gsap.utils.toArray('.hero__nav-item');
 
-const navObserver = new IntersectionObserver(
-  (entries) => {
-    entries.forEach((entry) => {
-      if (!entry.isIntersecting) return;
-      const id = `#${entry.target.id}`;
-      navItems.forEach((item) => {
-        item.classList.toggle('is-active', item.getAttribute('href') === id);
+function setNavOpacity(item, value) {
+  gsap.to(item, { opacity: value, duration: 0.3, ease: 'power2.out', overwrite: 'auto' });
+}
+
+navItems.forEach((item) => {
+  item.addEventListener('mouseenter', () => setNavOpacity(item, 1));
+  item.addEventListener('mouseleave', () => {
+    setNavOpacity(item, item.classList.contains('is-active') ? 1 : 0.5);
+  });
+
+  const section = document.querySelector(item.getAttribute('href'));
+  if (!section) return;
+  ScrollTrigger.create({
+    trigger: section,
+    start: 'top center',
+    end: 'bottom center',
+    onToggle: (self) => {
+      if (!self.isActive) return;
+      navItems.forEach((other) => {
+        const isActive = other === item;
+        other.classList.toggle('is-active', isActive);
+        setNavOpacity(other, isActive ? 1 : 0.5);
       });
-    });
-  },
-  { threshold: 0.4 }
-);
+    },
+  });
+});
 
-sections.forEach((section) => navObserver.observe(section));
+// Section "View All" + footer links — simple hover fade
+gsap.utils.toArray('.section__all, .links a').forEach((el) => {
+  el.addEventListener('mouseenter', () => gsap.to(el, { opacity: 0.6, duration: 0.3, ease: 'power2.out', overwrite: 'auto' }));
+  el.addEventListener('mouseleave', () => gsap.to(el, { opacity: 1, duration: 0.3, ease: 'power2.out', overwrite: 'auto' }));
+});
+
+// Card hover: lift + shadow + image zoom, plus fade/caption reveal
+// (Selected Work captions are always visible, so those two are skipped there)
+document.querySelectorAll('.card').forEach((card) => {
+  const visual = card.querySelector('.card__visual');
+  const fade = card.querySelector('.card__fade');
+  const text = card.querySelector('.card__text');
+  const captionsAlwaysOn = card.closest('.work-grid') !== null;
+
+  const tl = gsap.timeline({ paused: true });
+  tl.to(card, { y: -6, boxShadow: '0 24px 48px rgba(0,0,0,0.4)', duration: 0.5, ease: 'power2.out' }, 0);
+  if (visual) tl.to(visual, { scale: 1.045, duration: 0.6, ease: 'power2.out' }, 0);
+  if (fade && !captionsAlwaysOn) tl.to(fade, { opacity: 1, duration: 0.4, ease: 'power1.out' }, 0);
+  if (text && !captionsAlwaysOn) tl.to(text, { opacity: 1, y: 0, duration: 0.4, ease: 'power1.out' }, 0);
+
+  card.addEventListener('mouseenter', () => tl.play());
+  card.addEventListener('mouseleave', () => tl.reverse());
+});
 
 // Click-and-drag horizontal scroll for the Selected Work row
 const workGrid = document.querySelector('.work-grid');
