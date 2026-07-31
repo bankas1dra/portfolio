@@ -58,9 +58,12 @@ gsap.utils.toArray('.section__all, .links a').forEach((el) => {
 
 // Card hover: lift + shadow + image zoom, plus fade/caption reveal
 // (Selected Work captions are always visible, so those two are skipped there)
-// A snappy spring-ish ease (slight overshoot, quick settle) instead of a
-// plain ease-out reads much less sluggish for a fast hover interaction.
-const HOVER_EASE = 'back.out(1.7)';
+// Modeled on jay.tel's card hover: a real spring (overshoot, small
+// undershoot, settle) over ~0.65s on transform + a drop-shadow filter,
+// rather than a plain ease-out — that oscillation is what reads as
+// "snappy" instead of sluggish, even though the total duration is similar.
+const HOVER_EASE = 'elastic.out(0.5, 0.35)';
+const HOVER_DURATION = 0.65;
 
 document.querySelectorAll('.card').forEach((card) => {
   const visual = card.querySelector('.card__visual');
@@ -69,12 +72,13 @@ document.querySelectorAll('.card').forEach((card) => {
   const captionsAlwaysOn = card.closest('.work-grid') !== null;
 
   const tl = gsap.timeline({ paused: true, defaults: { overwrite: 'auto' } });
-  tl.to(card, { y: -6, duration: 0.45, ease: HOVER_EASE }, 0);
-  // Only the shadow's alpha animates (offsets/blur stay fixed) — tweening a
-  // single number is smooth; tweening the whole multi-value shadow string
-  // is what caused the janky/jumpy hover before.
-  tl.to(card, { '--shadow-o': 0.4, duration: 0.45, ease: HOVER_EASE }, 0);
-  if (visual) tl.to(visual, { scale: 1.045, duration: 0.5, ease: HOVER_EASE }, 0);
+  tl.to(card, { y: -8, scale: 1.03, duration: HOVER_DURATION, ease: HOVER_EASE }, 0);
+  tl.to(
+    card,
+    { '--shadow-o': 0.45, duration: HOVER_DURATION * 0.7, ease: 'power1.out' },
+    0
+  );
+  if (visual) tl.to(visual, { scale: 1.06, duration: HOVER_DURATION, ease: HOVER_EASE }, 0);
   if (fade && !captionsAlwaysOn) tl.to(fade, { opacity: 1, duration: 0.35, ease: 'power1.out' }, 0);
   if (text && !captionsAlwaysOn) tl.to(text, { opacity: 1, y: 0, duration: 0.35, ease: 'power1.out' }, 0);
 
