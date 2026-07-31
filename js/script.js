@@ -127,3 +127,37 @@ if (workGrid) {
     true
   );
 }
+
+// Case study pages: drag-to-reveal before/after comparison
+document.querySelectorAll('.case-compare').forEach((el) => {
+  const after = el.querySelector('.case-compare__after');
+  const handle = el.querySelector('.case-compare__handle');
+  const grip = el.querySelector('.case-compare__grip');
+  if (!after) return;
+
+  const setSplit = (pct) => {
+    const clamped = Math.min(96, Math.max(4, pct));
+    after.style.clipPath = `inset(0 0 0 ${clamped}%)`;
+    if (handle) handle.style.left = `${clamped}%`;
+    if (grip) grip.style.left = `${clamped}%`;
+  };
+
+  const updateFromClientX = (clientX) => {
+    const rect = el.getBoundingClientRect();
+    setSplit(((clientX - rect.left) / rect.width) * 100);
+  };
+
+  let dragging = false;
+  el.addEventListener('mousedown', (e) => {
+    dragging = true;
+    updateFromClientX(e.clientX);
+  });
+  window.addEventListener('mousemove', (e) => {
+    if (!dragging) return;
+    updateFromClientX(e.clientX);
+  });
+  window.addEventListener('mouseup', () => { dragging = false; });
+
+  el.addEventListener('touchstart', (e) => updateFromClientX(e.touches[0].clientX), { passive: true });
+  el.addEventListener('touchmove', (e) => updateFromClientX(e.touches[0].clientX), { passive: true });
+});
