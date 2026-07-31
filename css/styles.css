@@ -152,7 +152,8 @@ a { color: inherit; text-decoration: none; }
   display: block;
   border-radius: 21px;
   aspect-ratio: var(--card-w) / var(--card-h);
-  box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+  --shadow-o: 0;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, var(--shadow-o));
 }
 
 .card__clip {
@@ -247,6 +248,13 @@ a { color: inherit; text-decoration: none; }
   -ms-overflow-style: none;
   user-select: none;
   -webkit-user-select: none;
+  /* overflow-x:auto forces overflow-y to act as auto too (per spec, an axis
+     can't stay "visible" while the other isn't), which would otherwise clip
+     the hover box-shadow at the row's top/bottom edge. Pad the scroll area
+     and cancel the padding with a matching negative margin so the shadow
+     has room without shifting surrounding layout. */
+  padding: 24px 0 90px;
+  margin: -24px 0 -90px;
 }
 .work-grid img { -webkit-user-drag: none; user-drag: none; }
 .work-grid::-webkit-scrollbar { display: none; }
