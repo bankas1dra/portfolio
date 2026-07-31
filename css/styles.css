@@ -218,6 +218,13 @@ a { color: inherit; text-decoration: none; }
   transform: translateY(0);
 }
 
+/* Selected Work: caption + fade are always shown, not hover-only */
+.work-grid .card__fade,
+.work-grid .card__text {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 .card__title {
   font-family: var(--font-body);
   font-weight: 500;
