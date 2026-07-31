@@ -130,14 +130,17 @@ if (workGrid) {
 
 // Case study pages: drag-to-reveal before/after comparison
 document.querySelectorAll('.case-compare').forEach((el) => {
-  const after = el.querySelector('.case-compare__after');
+  const afterClip = el.querySelector('.case-compare__after-clip');
   const handle = el.querySelector('.case-compare__handle');
   const grip = el.querySelector('.case-compare__grip');
-  if (!after) return;
+  if (!afterClip) return;
 
   const setSplit = (pct) => {
     const clamped = Math.min(96, Math.max(4, pct));
-    after.style.clipPath = `inset(0 0 0 ${clamped}%)`;
+    // Clip the full-size wrapper, not the (smaller, offset) image itself —
+    // the percentage here is relative to the wrapper's own box, which is
+    // the whole comparison container, so it lines up with the handle/grip.
+    afterClip.style.clipPath = `inset(0 0 0 ${clamped}%)`;
     if (handle) handle.style.left = `${clamped}%`;
     if (grip) grip.style.left = `${clamped}%`;
   };
