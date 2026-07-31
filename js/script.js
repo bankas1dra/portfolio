@@ -1,6 +1,6 @@
 gsap.registerPlugin(ScrollTrigger);
 
-const EASE = 'expo.out';
+const EASE = 'power3.out';
 
 // Reveal-on-scroll for elements marked .reveal
 gsap.set('.reveal', { y: 24 });
@@ -8,7 +8,7 @@ gsap.utils.toArray('.reveal').forEach((el, i) => {
   gsap.to(el, {
     opacity: 1,
     y: 0,
-    duration: 0.8,
+    duration: 0.7,
     ease: EASE,
     delay: (i % 6) * 0.06,
     overwrite: 'auto',
