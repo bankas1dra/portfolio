@@ -1,10 +1,40 @@
 gsap.registerPlugin(ScrollTrigger);
 
 const EASE = 'power3.out';
+const HOVER_EASE = 'elastic.out(0.5, 0.35)';
+const HOVER_DURATION = 0.65;
 
-// Reveal-on-scroll for elements marked .reveal
-gsap.set('.reveal', { y: 24 });
-gsap.utils.toArray('.reveal').forEach((el, i) => {
+const mainEl = document.querySelector('main');
+const navItems = gsap.utils.toArray('.hero__nav-item');
+
+function setNavOpacity(item, value) {
+  gsap.to(item, { opacity: value, duration: 0.3, ease: 'power2.out', overwrite: 'auto' });
+}
+
+// Sets which nav item reads as active by matching the page path portion of
+// its href (ignoring any #hash) against the given page path.
+function setActiveNav(pagePath) {
+  navItems.forEach((item) => {
+    const itemPath = item.getAttribute('href').split('#')[0] || 'index.html';
+    const isActive = itemPath === pagePath;
+    item.classList.toggle('is-active', isActive);
+    setNavOpacity(item, isActive ? 1 : 0.5);
+  });
+}
+
+navItems.forEach((item) => {
+  item.addEventListener('mouseenter', () => setNavOpacity(item, 1));
+  item.addEventListener('mouseleave', () => {
+    setNavOpacity(item, item.classList.contains('is-active') ? 1 : 0.5);
+  });
+});
+
+// Reveal-on-load for everything outside <main> (the hero header, the case
+// pages' back-nav) — this chrome is persistent and never swapped by the
+// router below, so it only needs to animate in once.
+const chromeReveals = Array.from(document.querySelectorAll('.reveal')).filter((el) => !mainEl.contains(el));
+gsap.set(chromeReveals, { y: 24, opacity: 0 });
+gsap.utils.toArray(chromeReveals).forEach((el, i) => {
   gsap.to(el, {
     opacity: 1,
     y: 0,
@@ -20,106 +50,78 @@ gsap.utils.toArray('.reveal').forEach((el, i) => {
   });
 });
 
-// Highlight active nav item based on scrolled section
-const navItems = gsap.utils.toArray('.hero__nav-item');
-
-function setNavOpacity(item, value) {
-  gsap.to(item, { opacity: value, duration: 0.3, ease: 'power2.out', overwrite: 'auto' });
-}
-
-navItems.forEach((item) => {
-  item.addEventListener('mouseenter', () => setNavOpacity(item, 1));
-  item.addEventListener('mouseleave', () => {
-    setNavOpacity(item, item.classList.contains('is-active') ? 1 : 0.5);
-  });
-
-  const section = document.querySelector(item.getAttribute('href'));
-  if (!section) return;
-  ScrollTrigger.create({
-    trigger: section,
-    start: 'top center',
-    end: 'bottom center',
-    onToggle: (self) => {
-      if (!self.isActive) return;
-      navItems.forEach((other) => {
-        const isActive = other === item;
-        other.classList.toggle('is-active', isActive);
-        setNavOpacity(other, isActive ? 1 : 0.5);
-      });
-    },
-  });
-});
-
-// Section "View All" + footer links — simple hover fade
-gsap.utils.toArray('.section__all, .links a').forEach((el) => {
+// Footer hover fade + copy-to-clipboard — the footer lives outside <main>,
+// so it's never swapped out and only needs to be wired up once.
+gsap.utils.toArray('.links a').forEach((el) => {
   el.addEventListener('mouseenter', () => gsap.to(el, { opacity: 0.6, duration: 0.3, ease: 'power2.out', overwrite: 'auto' }));
   el.addEventListener('mouseleave', () => gsap.to(el, { opacity: 1, duration: 0.3, ease: 'power2.out', overwrite: 'auto' }));
 });
 
-// Card hover: lift + shadow + image zoom, plus fade/caption reveal
-// (Selected Work captions are always visible, so those two are skipped there)
-// Modeled on jay.tel's card hover: a real spring (overshoot, small
-// undershoot, settle) over ~0.65s on transform + a drop-shadow filter,
-// rather than a plain ease-out — that oscillation is what reads as
-// "snappy" instead of sluggish, even though the total duration is similar.
-const HOVER_EASE = 'elastic.out(0.5, 0.35)';
-const HOVER_DURATION = 0.65;
+function copyText(text) {
+  if (navigator.clipboard && window.isSecureContext) {
+    return navigator.clipboard.writeText(text);
+  }
+  // Fallback for browsers/contexts without Clipboard API access
+  const temp = document.createElement('textarea');
+  temp.value = text;
+  temp.style.position = 'fixed';
+  temp.style.opacity = '0';
+  document.body.appendChild(temp);
+  temp.select();
+  document.execCommand('copy');
+  document.body.removeChild(temp);
+  return Promise.resolve();
+}
 
-document.querySelectorAll('.card').forEach((card) => {
-  const visual = card.querySelector('.card__visual');
-  const fade = card.querySelector('.card__fade');
-  const text = card.querySelector('.card__text');
-  const captionsAlwaysOn = card.closest('.work-grid') !== null;
+document.querySelectorAll('.link-copy').forEach((btn) => {
+  const label = btn.dataset.label || btn.textContent;
+  let resetTimer = null;
 
-  const tl = gsap.timeline({ paused: true, defaults: { overwrite: 'auto' } });
-  tl.to(card, { y: -8, scale: 1.03, duration: HOVER_DURATION, ease: HOVER_EASE }, 0);
-  tl.to(
-    card,
-    { '--shadow-o': 0.45, duration: HOVER_DURATION * 0.7, ease: 'power1.out' },
-    0
-  );
-  if (visual) tl.to(visual, { scale: 1.06, duration: HOVER_DURATION, ease: HOVER_EASE }, 0);
-  if (fade && !captionsAlwaysOn) tl.to(fade, { opacity: 1, duration: 0.35, ease: 'power1.out' }, 0);
-  if (text && !captionsAlwaysOn) tl.to(text, { opacity: 1, y: 0, duration: 0.35, ease: 'power1.out' }, 0);
-
-  card.addEventListener('mouseenter', () => tl.play());
-  card.addEventListener('mouseleave', () => tl.reverse());
+  btn.addEventListener('click', () => {
+    copyText(btn.dataset.copy).finally(() => {
+      btn.textContent = 'Copied!';
+      clearTimeout(resetTimer);
+      resetTimer = setTimeout(() => { btn.textContent = label; }, 1500);
+    });
+  });
 });
 
-// Click-and-drag horizontal scroll for the Selected Work row
-const workGrid = document.querySelector('.work-grid');
-if (workGrid) {
-  let isDown = false;
-  let startX = 0;
-  let startScroll = 0;
-  let moved = false;
+// Click-and-drag horizontal scroll for the Selected Work row. The window-level
+// listeners are wired up once; only the per-grid mousedown/click listeners
+// get re-attached (in initMain) whenever <main> — and the grid inside it —
+// is swapped out for another page.
+const workGridDrag = { grid: null, isDown: false, startX: 0, startScroll: 0, moved: false };
 
-  workGrid.addEventListener('mousedown', (e) => {
-    isDown = true;
-    moved = false;
-    startX = e.pageX;
-    startScroll = workGrid.scrollLeft;
-    workGrid.classList.add('is-dragging');
-  });
+window.addEventListener('mouseup', () => {
+  if (!workGridDrag.isDown) return;
+  workGridDrag.isDown = false;
+  workGridDrag.grid?.classList.remove('is-dragging');
+});
+window.addEventListener('mousemove', (e) => {
+  if (!workGridDrag.isDown) return;
+  const dx = e.pageX - workGridDrag.startX;
+  if (Math.abs(dx) > 4) workGridDrag.moved = true;
+  workGridDrag.grid.scrollLeft = workGridDrag.startScroll - dx;
+});
 
-  window.addEventListener('mouseup', () => {
-    if (!isDown) return;
-    isDown = false;
-    workGrid.classList.remove('is-dragging');
-  });
+function initWorkGrid(root) {
+  const grid = root.querySelector('.work-grid');
+  if (!grid) return;
+  workGridDrag.grid = grid;
 
-  window.addEventListener('mousemove', (e) => {
-    if (!isDown) return;
-    const dx = e.pageX - startX;
-    if (Math.abs(dx) > 4) moved = true;
-    workGrid.scrollLeft = startScroll - dx;
+  grid.addEventListener('mousedown', (e) => {
+    workGridDrag.isDown = true;
+    workGridDrag.moved = false;
+    workGridDrag.startX = e.pageX;
+    workGridDrag.startScroll = grid.scrollLeft;
+    grid.classList.add('is-dragging');
   });
 
   // Suppress the click on a card if the pointer actually dragged
-  workGrid.addEventListener(
+  grid.addEventListener(
     'click',
     (e) => {
-      if (moved) {
+      if (workGridDrag.moved) {
         e.preventDefault();
         e.stopPropagation();
       }
@@ -128,39 +130,198 @@ if (workGrid) {
   );
 }
 
+// Card hover: lift + shadow + image zoom, plus fade/caption reveal
+// (Selected Work captions are always visible, so those two are skipped there)
+// Modeled on jay.tel's card hover: a real spring (overshoot, small
+// undershoot, settle) over ~0.65s on transform + a drop-shadow filter,
+// rather than a plain ease-out — that oscillation is what reads as
+// "snappy" instead of sluggish, even though the total duration is similar.
+function initCards(root) {
+  root.querySelectorAll('.card').forEach((card) => {
+    const visual = card.querySelector('.card__visual');
+    const fade = card.querySelector('.card__fade');
+    const text = card.querySelector('.card__text');
+    const captionsAlwaysOn = card.closest('.work-grid') !== null;
+
+    // Animate straight to an explicit target on both enter and leave (instead
+    // of playing/reversing one timeline) — reverse() replays at the position
+    // the timeline was interrupted at, so a longer hover let it drift further
+    // and made the return take longer. Two fixed-duration tweens always take
+    // the same time regardless of how long the card was hovered.
+    const setHover = (active) => {
+      gsap.to(card, { y: active ? -8 : 0, scale: active ? 1.03 : 1, duration: HOVER_DURATION, ease: HOVER_EASE, overwrite: 'auto' });
+      gsap.to(card, { '--shadow-o': active ? 0.45 : 0, duration: HOVER_DURATION * 0.7, ease: 'power1.out', overwrite: 'auto' });
+      if (visual) gsap.to(visual, { scale: active ? 1.06 : 1, duration: HOVER_DURATION, ease: HOVER_EASE, overwrite: 'auto' });
+      if (fade && !captionsAlwaysOn) gsap.to(fade, { opacity: active ? 1 : 0, duration: 0.35, ease: 'power1.out', overwrite: 'auto' });
+      if (text && !captionsAlwaysOn) gsap.to(text, { opacity: active ? 1 : 0, y: active ? 0 : 10, duration: 0.35, ease: 'power1.out', overwrite: 'auto' });
+    };
+
+    card.addEventListener('mouseenter', () => setHover(true));
+    card.addEventListener('mouseleave', () => setHover(false));
+  });
+}
+
 // Case study pages: drag-to-reveal before/after comparison
-document.querySelectorAll('.case-compare').forEach((el) => {
-  const afterClip = el.querySelector('.case-compare__after-clip');
-  const handle = el.querySelector('.case-compare__handle');
-  const grip = el.querySelector('.case-compare__grip');
-  if (!afterClip) return;
+function initCaseCompare(root) {
+  root.querySelectorAll('.case-compare').forEach((el) => {
+    const afterClip = el.querySelector('.case-compare__after-clip');
+    const handle = el.querySelector('.case-compare__handle');
+    const grip = el.querySelector('.case-compare__grip');
+    if (!afterClip) return;
 
-  const setSplit = (pct) => {
-    const clamped = Math.min(96, Math.max(4, pct));
-    // Clip the full-size wrapper, not the (smaller, offset) image itself —
-    // the percentage here is relative to the wrapper's own box, which is
-    // the whole comparison container, so it lines up with the handle/grip.
-    afterClip.style.clipPath = `inset(0 0 0 ${clamped}%)`;
-    if (handle) handle.style.left = `${clamped}%`;
-    if (grip) grip.style.left = `${clamped}%`;
+    const setSplit = (pct) => {
+      const clamped = Math.min(96, Math.max(4, pct));
+      // Clip the full-size wrapper, not the (smaller, offset) image itself —
+      // the percentage here is relative to the wrapper's own box, which is
+      // the whole comparison container, so it lines up with the handle/grip.
+      afterClip.style.clipPath = `inset(0 0 0 ${clamped}%)`;
+      if (handle) handle.style.left = `${clamped}%`;
+      if (grip) grip.style.left = `${clamped}%`;
+    };
+
+    const updateFromClientX = (clientX) => {
+      const rect = el.getBoundingClientRect();
+      setSplit(((clientX - rect.left) / rect.width) * 100);
+    };
+
+    let dragging = false;
+    el.addEventListener('mousedown', (e) => {
+      dragging = true;
+      updateFromClientX(e.clientX);
+    });
+    window.addEventListener('mousemove', (e) => {
+      if (!dragging) return;
+      updateFromClientX(e.clientX);
+    });
+    window.addEventListener('mouseup', () => { dragging = false; });
+
+    el.addEventListener('touchstart', (e) => updateFromClientX(e.touches[0].clientX), { passive: true });
+    el.addEventListener('touchmove', (e) => updateFromClientX(e.touches[0].clientX), { passive: true });
+  });
+}
+
+// Everything below lives inside <main> and needs to be re-run every time the
+// in-app router (further down) swaps <main> for another page's content.
+let mainTriggers = [];
+
+function initMain() {
+  // Tear down triggers left over from the outgoing page before wiring up
+  // the new one, so nothing keeps pointing at detached elements.
+  mainTriggers.forEach((t) => t.kill());
+  mainTriggers = [];
+
+  const reveals = mainEl.querySelectorAll('.reveal');
+  gsap.set(reveals, { y: 24, opacity: 0 });
+  gsap.utils.toArray(reveals).forEach((el, i) => {
+    const tween = gsap.to(el, {
+      opacity: 1,
+      y: 0,
+      duration: 0.7,
+      ease: EASE,
+      delay: (i % 6) * 0.06,
+      overwrite: 'auto',
+      scrollTrigger: {
+        trigger: el,
+        start: 'top 88%',
+        once: true,
+      },
+    });
+    if (tween.scrollTrigger) mainTriggers.push(tween.scrollTrigger);
+  });
+
+  // In-page anchor highlighting (e.g. #work on the homepage)
+  navItems.forEach((item) => {
+    const href = item.getAttribute('href');
+    const hash = href.split('#')[1];
+    if (!hash) return;
+    const section = mainEl.querySelector(`#${hash}`);
+    if (!section) return;
+    mainTriggers.push(
+      ScrollTrigger.create({
+        trigger: section,
+        start: 'top center',
+        end: 'bottom center',
+        onToggle: (self) => {
+          if (!self.isActive) return;
+          setActiveNav(href.split('#')[0] || 'index.html');
+        },
+      })
+    );
+  });
+
+  mainEl.querySelectorAll('.section__all').forEach((el) => {
+    el.addEventListener('mouseenter', () => gsap.to(el, { opacity: 0.6, duration: 0.3, ease: 'power2.out', overwrite: 'auto' }));
+    el.addEventListener('mouseleave', () => gsap.to(el, { opacity: 1, duration: 0.3, ease: 'power2.out', overwrite: 'auto' }));
+  });
+
+  initCards(mainEl);
+  initWorkGrid(mainEl);
+  initCaseCompare(mainEl);
+
+  // <main>'s content (and therefore document height) just changed — recompute
+  // trigger positions instead of trusting whatever was measured before.
+  ScrollTrigger.refresh();
+}
+
+initMain();
+
+// ---- In-app router for the hero nav tabs (Projects / About / Experience) ----
+// Swaps <main> instead of doing a full page load, so the header/footer never
+// unmount and the page doesn't jump back to the hero on every tab switch.
+function normalizedPath(path) {
+  const file = path.split('/').pop();
+  return file === '' ? 'index.html' : file;
+}
+
+async function loadPage(pagePath, { push = true } = {}) {
+  let html;
+  try {
+    const res = await fetch(pagePath);
+    if (!res.ok) throw new Error('bad response');
+    html = await res.text();
+  } catch {
+    window.location.href = pagePath; // fall back to a real navigation
+    return;
+  }
+
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const newMain = doc.querySelector('main');
+  if (!newMain) {
+    window.location.href = pagePath;
+    return;
+  }
+
+  const apply = () => {
+    mainEl.innerHTML = newMain.innerHTML;
+    mainEl.className = newMain.className;
+    document.title = doc.title;
+    setActiveNav(pagePath);
+    initMain();
+    // Deliberately no scroll adjustment — stay exactly where the click
+    // happened instead of yanking the viewport to the new content's top.
   };
 
-  const updateFromClientX = (clientX) => {
-    const rect = el.getBoundingClientRect();
-    setSplit(((clientX - rect.left) / rect.width) * 100);
-  };
+  if (document.startViewTransition) {
+    document.startViewTransition(apply);
+  } else {
+    apply();
+  }
 
-  let dragging = false;
-  el.addEventListener('mousedown', (e) => {
-    dragging = true;
-    updateFromClientX(e.clientX);
-  });
-  window.addEventListener('mousemove', (e) => {
-    if (!dragging) return;
-    updateFromClientX(e.clientX);
-  });
-  window.addEventListener('mouseup', () => { dragging = false; });
+  if (push) history.pushState({ pagePath }, '', pagePath);
+}
 
-  el.addEventListener('touchstart', (e) => updateFromClientX(e.touches[0].clientX), { passive: true });
-  el.addEventListener('touchmove', (e) => updateFromClientX(e.touches[0].clientX), { passive: true });
+document.addEventListener('click', (e) => {
+  const link = e.target.closest('.hero__nav-item');
+  if (!link) return;
+
+  const href = link.getAttribute('href');
+  const targetPath = normalizedPath(href.split('#')[0] || 'index.html');
+  if (targetPath === normalizedPath(location.pathname)) return; // already on this page — let the browser handle any in-page anchor
+
+  e.preventDefault();
+  loadPage(targetPath);
+});
+
+window.addEventListener('popstate', () => {
+  loadPage(normalizedPath(location.pathname), { push: false });
 });
