@@ -325,12 +325,17 @@ a { color: inherit; text-decoration: none; }
   scroll-behavior: auto;
   user-select: none;
 }
-/* While dragging, cards slide underneath a roughly-stationary cursor, which
-   keeps firing mouseenter/mouseleave on whichever card happens to pass under
-   it — triggering that card's hover scale/shadow animation mid-drag and
-   making it look like the cursor is "stuck" pulling that one card around.
-   Disabling pointer events on cards during the drag stops that. */
-.work-grid.is-dragging .card {
+/* While actually dragging (pointer has moved past the click threshold),
+   cards slide underneath a roughly-stationary cursor, which keeps firing
+   mouseenter/mouseleave on whichever card happens to pass under it —
+   triggering that card's hover scale/shadow animation mid-drag and making
+   it look like the cursor is "stuck" pulling that one card around.
+   Disabling pointer events on cards stops that — but only once movement is
+   confirmed (.is-panning), not from the moment the button goes down
+   (.is-dragging): doing it immediately on mousedown made the card
+   pointer-events-transparent before mouseup/click ever fired, which broke
+   plain clicks entirely. */
+.work-grid.is-panning .card {
   pointer-events: none;
 }
 .work-grid .card {

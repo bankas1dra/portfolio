@@ -142,13 +142,20 @@ const workGridDrag = { grid: null, isDown: false, startX: 0, startScroll: 0, sta
 window.addEventListener('mouseup', () => {
   if (!workGridDrag.isDown) return;
   workGridDrag.isDown = false;
-  workGridDrag.grid?.classList.remove('is-dragging');
+  workGridDrag.grid?.classList.remove('is-dragging', 'is-panning');
 });
 window.addEventListener('mousemove', (e) => {
   if (!workGridDrag.isDown) return;
   const dx = e.pageX - workGridDrag.startX;
   const heldLong = Date.now() - workGridDrag.startTime > DRAG_TIME_THRESHOLD;
-  if (Math.abs(dx) > DRAG_DISTANCE_THRESHOLD || heldLong) workGridDrag.moved = true;
+  if (Math.abs(dx) > DRAG_DISTANCE_THRESHOLD || heldLong) {
+    // Only flip cards pointer-events-transparent once movement is confirmed —
+    // doing it from mousedown itself made every plain click's mouseup/click
+    // hit-test miss the card, since it had already gone pointer-events:none
+    // before the button was even released.
+    workGridDrag.moved = true;
+    workGridDrag.grid.classList.add('is-panning');
+  }
   workGridDrag.grid.scrollLeft = workGridDrag.startScroll - dx;
 });
 
