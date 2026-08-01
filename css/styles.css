@@ -325,6 +325,14 @@ a { color: inherit; text-decoration: none; }
   scroll-behavior: auto;
   user-select: none;
 }
+/* While dragging, cards slide underneath a roughly-stationary cursor, which
+   keeps firing mouseenter/mouseleave on whichever card happens to pass under
+   it — triggering that card's hover scale/shadow animation mid-drag and
+   making it look like the cursor is "stuck" pulling that one card around.
+   Disabling pointer events on cards during the drag stops that. */
+.work-grid.is-dragging .card {
+  pointer-events: none;
+}
 .work-grid .card {
   flex: 0 0 auto;
   width: calc(var(--card-w) * 1px);
