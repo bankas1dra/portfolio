@@ -128,7 +128,16 @@ document.querySelectorAll('.link-copy').forEach((btn) => {
 // listeners are wired up once; only the per-grid mousedown/click listeners
 // get re-attached (in initMain) whenever <main> — and the grid inside it —
 // is swapped out for another page.
-const workGridDrag = { grid: null, isDown: false, startX: 0, startScroll: 0, moved: false };
+// 4px was too tight: real mice/trackpads report a few pixels of jitter on
+// an otherwise-still click, especially over a small target, and that jitter
+// was enough to misclassify plain clicks as drags and silently eat them —
+// only the widest card (Dzeny, which naturally sits still under the cursor)
+// reliably registered clicks. A larger distance threshold, plus letting any
+// short, fast press through regardless of distance, fixes that.
+const DRAG_DISTANCE_THRESHOLD = 10;
+const DRAG_TIME_THRESHOLD = 250;
+
+const workGridDrag = { grid: null, isDown: false, startX: 0, startScroll: 0, startTime: 0, moved: false };
 
 window.addEventListener('mouseup', () => {
   if (!workGridDrag.isDown) return;
@@ -138,7 +147,8 @@ window.addEventListener('mouseup', () => {
 window.addEventListener('mousemove', (e) => {
   if (!workGridDrag.isDown) return;
   const dx = e.pageX - workGridDrag.startX;
-  if (Math.abs(dx) > 4) workGridDrag.moved = true;
+  const heldLong = Date.now() - workGridDrag.startTime > DRAG_TIME_THRESHOLD;
+  if (Math.abs(dx) > DRAG_DISTANCE_THRESHOLD || heldLong) workGridDrag.moved = true;
   workGridDrag.grid.scrollLeft = workGridDrag.startScroll - dx;
 });
 
@@ -152,6 +162,7 @@ function initWorkGrid(root) {
     workGridDrag.moved = false;
     workGridDrag.startX = e.pageX;
     workGridDrag.startScroll = grid.scrollLeft;
+    workGridDrag.startTime = Date.now();
     grid.classList.add('is-dragging');
   });
 
