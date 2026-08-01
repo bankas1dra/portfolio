@@ -198,6 +198,15 @@ a, button {
 
 #work { padding-top: 56px; }
 
+/* Selected Work's 4 cards need 1960px to sit un-cropped, plus the section's
+   own 20px side padding = 2000px. On a screen wide enough to actually show
+   that without the section itself getting clipped, let it grow past the
+   site's usual 1240px container instead of forcing horizontal
+   scroll/paging when there's no real need for it. */
+@media (min-width: 2040px) {
+  #work { max-width: 2000px; }
+}
+
 .section__head {
   display: flex;
   align-items: baseline;
@@ -313,18 +322,25 @@ a, button {
   margin: 0;
 }
 
-/* ---------- Selected Work: single horizontal row, native size, drag/scroll for overflow ---------- */
+/* ---------- Selected Work: single horizontal row ----------
+   No manual drag — the row scrolls natively (trackpad/wheel/touch), and
+   paging is done via the two edge buttons below (hover fade + arrow cursor,
+   click to advance one "page"). */
+.work-grid-wrap {
+  position: relative;
+}
 .work-grid {
   display: flex;
   flex-wrap: nowrap;
   align-items: flex-end;
   gap: var(--gap);
   overflow-x: auto;
-  cursor: grab;
+  /* No scroll-behavior:smooth here — GSAP animates scrollLeft directly for
+     the edge-button paging, and the two fighting over the same property
+     produced inconsistent, overshooting end positions. Native scroll
+     (wheel/trackpad/touch) stays instant, which is expected for those. */
   scrollbar-width: none;
   -ms-overflow-style: none;
-  user-select: none;
-  -webkit-user-select: none;
   /* overflow-x:auto forces overflow-y to act as auto too (per spec, an axis
      can't stay "visible" while the other isn't), which would otherwise clip
      the hover box-shadow at the row's top/bottom edge. Pad the scroll area
@@ -335,28 +351,6 @@ a, button {
 }
 .work-grid img { -webkit-user-drag: none; user-drag: none; }
 .work-grid::-webkit-scrollbar { display: none; }
-/* Cards are links, so the global `a { cursor: pointer }` rule would win over
-   the grid's own grab cursor by direct-match specificity. Force them back to
-   whatever the grid (or its JS-driven inline style) currently says. */
-.work-grid .card { cursor: inherit; }
-.work-grid.is-dragging {
-  cursor: grabbing;
-  scroll-behavior: auto;
-  user-select: none;
-}
-/* While actually dragging (pointer has moved past the click threshold),
-   cards slide underneath a roughly-stationary cursor, which keeps firing
-   mouseenter/mouseleave on whichever card happens to pass under it —
-   triggering that card's hover scale/shadow animation mid-drag and making
-   it look like the cursor is "stuck" pulling that one card around.
-   Disabling pointer events on cards stops that — but only once movement is
-   confirmed (.is-panning), not from the moment the button goes down
-   (.is-dragging): doing it immediately on mousedown made the card
-   pointer-events-transparent before mouseup/click ever fired, which broke
-   plain clicks entirely. */
-.work-grid.is-panning .card {
-  pointer-events: none;
-}
 .work-grid .card {
   flex: 0 0 auto;
   width: calc(var(--card-w) * 1px);
@@ -364,6 +358,64 @@ a, button {
 
 @media (max-width: 560px) {
   .work-grid .card { width: calc(var(--card-w) * 0.72px); }
+}
+
+/* Edge paging buttons: sit on top of the row at each end, full height. Inert
+   and invisible until JS marks that edge ".is-available" (there's actually
+   more to page to that side); even then the fade and "More" hint only show
+   up on hover, but the button already covers — and so blocks clicks/hover
+   to — whatever card is currently underneath it. Desktop-with-a-mouse only:
+   touch devices get native swipe-scroll instead of hover affordances. */
+.work-edge {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 160px;
+  max-width: 25%;
+  border: none;
+  padding: 0;
+  background: none;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 2;
+  transition: opacity 0.3s var(--ease);
+}
+@media (hover: hover) and (pointer: fine) {
+  .work-edge.is-available { pointer-events: auto; }
+  .work-edge.is-available:hover { opacity: 1; }
+}
+.work-edge--left {
+  left: 0;
+  background: linear-gradient(to right, var(--bg) 0%, transparent 100%);
+}
+.work-edge--right {
+  right: 0;
+  background: linear-gradient(to left, var(--bg) 0%, transparent 100%);
+}
+.work-edge__hint {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 62px;
+}
+.work-edge__hint span {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 20px;
+  color: #fff;
+  text-align: center;
+}
+.work-edge__icon {
+  width: 32px;
+  height: 32px;
+}
+.work-edge__icon--right {
+  transform: scaleX(-1);
 }
 
 /* ---------- Playground (masonry via columns) ---------- */

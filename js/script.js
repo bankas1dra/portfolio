@@ -124,113 +124,37 @@ document.querySelectorAll('.link-copy').forEach((btn) => {
   });
 });
 
-// Click-and-drag horizontal scroll for the Selected Work row. The window-level
-// listeners are wired up once; only the per-grid mousedown/click listeners
-// get re-attached (in initMain) whenever <main> — and the grid inside it —
-// is swapped out for another page.
-// 4px was too tight: real mice/trackpads report a few pixels of jitter on
-// an otherwise-still click, especially over a small target, and that jitter
-// was enough to misclassify plain clicks as drags and silently eat them —
-// only the widest card (Dzeny, which naturally sits still under the cursor)
-// reliably registered clicks. A larger distance threshold, plus letting any
-// short, fast press through regardless of distance, fixes that.
-const DRAG_DISTANCE_THRESHOLD = 10;
-const DRAG_TIME_THRESHOLD = 250;
-const EDGE_ZONE = 120; // px — how close to the row's edge counts as "hovering the edge"
-
-const workGridDrag = { grid: null, isDown: false, startX: 0, startScroll: 0, startTime: 0, moved: false, lastClientX: null };
-
-// Which way (if either) the row can still scroll from its current position.
-function edgeAvailability(grid) {
+// Selected Work row: no manual drag. The row itself scrolls natively
+// (trackpad/wheel/touch); paging is done via the two edge buttons, which are
+// real elements sitting on top of the row — no mouseup/click timing games,
+// so a click on a card is just a click on a card.
+function updateWorkEdges(grid, leftBtn, rightBtn) {
   const max = grid.scrollWidth - grid.clientWidth;
-  return {
-    left: grid.scrollLeft > 1,
-    right: grid.scrollLeft < max - 1,
-  };
+  leftBtn.classList.toggle('is-available', grid.scrollLeft > 1);
+  rightBtn.classList.toggle('is-available', grid.scrollLeft < max - 1);
 }
-
-// Hover-only cursor: arrow-left/arrow-right near an edge that still has more
-// content, otherwise clear the inline style and let the CSS grab cursor
-// (or, mid-drag, the .is-dragging grabbing cursor) show through.
-function updateGridCursor(grid, clientX) {
-  if (workGridDrag.isDown) return;
-  const rect = grid.getBoundingClientRect();
-  const relX = clientX - rect.left;
-  const { left, right } = edgeAvailability(grid);
-  if (relX < EDGE_ZONE && left) {
-    grid.style.cursor = 'var(--cursor-arrow-left)';
-  } else if (relX > rect.width - EDGE_ZONE && right) {
-    grid.style.cursor = 'var(--cursor-arrow-right)';
-  } else {
-    grid.style.cursor = '';
-  }
-}
-
-window.addEventListener('mouseup', () => {
-  if (!workGridDrag.isDown) return;
-  workGridDrag.isDown = false;
-  workGridDrag.grid?.classList.remove('is-dragging', 'is-panning');
-  // The edge zones may have changed availability now that the drag moved the
-  // row, and this mouseup itself doesn't carry a position to re-check with.
-  if (workGridDrag.grid && workGridDrag.lastClientX !== null) {
-    updateGridCursor(workGridDrag.grid, workGridDrag.lastClientX);
-  }
-});
-window.addEventListener('mousemove', (e) => {
-  workGridDrag.lastClientX = e.clientX;
-  if (!workGridDrag.isDown) return;
-  const dx = e.pageX - workGridDrag.startX;
-  const heldLong = Date.now() - workGridDrag.startTime > DRAG_TIME_THRESHOLD;
-  if (Math.abs(dx) > DRAG_DISTANCE_THRESHOLD || heldLong) {
-    // Only flip cards pointer-events-transparent once movement is confirmed —
-    // doing it from mousedown itself made every plain click's mouseup/click
-    // hit-test miss the card, since it had already gone pointer-events:none
-    // before the button was even released.
-    workGridDrag.moved = true;
-    workGridDrag.grid.classList.add('is-panning');
-  }
-  workGridDrag.grid.scrollLeft = workGridDrag.startScroll - dx;
-});
 
 function initWorkGrid(root) {
   const grid = root.querySelector('.work-grid');
-  if (!grid) return;
-  workGridDrag.grid = grid;
+  const wrap = root.querySelector('.work-grid-wrap');
+  if (!grid || !wrap) return;
+  const leftBtn = wrap.querySelector('.work-edge--left');
+  const rightBtn = wrap.querySelector('.work-edge--right');
+  if (!leftBtn || !rightBtn) return;
 
-  grid.addEventListener('mousemove', (e) => updateGridCursor(grid, e.clientX));
-  grid.addEventListener('mouseleave', () => {
-    if (!workGridDrag.isDown) grid.style.cursor = '';
-  });
-  // Scrolling (e.g. from a drag in progress) can change which edges still
-  // have content without the pointer itself moving — keep the cursor honest.
-  grid.addEventListener('scroll', () => {
-    if (workGridDrag.lastClientX !== null) updateGridCursor(grid, workGridDrag.lastClientX);
-  });
+  const refresh = () => updateWorkEdges(grid, leftBtn, rightBtn);
+  refresh();
+  grid.addEventListener('scroll', refresh);
+  window.addEventListener('resize', refresh);
 
-  grid.addEventListener('mousedown', (e) => {
-    workGridDrag.isDown = true;
-    workGridDrag.moved = false;
-    workGridDrag.startX = e.pageX;
-    workGridDrag.startScroll = grid.scrollLeft;
-    workGridDrag.startTime = Date.now();
-    // Let the .is-dragging class's grabbing cursor take over — an inline
-    // arrow cursor left over from just before the press would otherwise
-    // outrank it.
-    grid.style.cursor = '';
-    grid.classList.add('is-dragging');
-  });
-
-  // Suppress the click on a card if the pointer actually dragged
-  grid.addEventListener(
-    'click',
-    (e) => {
-      if (workGridDrag.moved) {
-        e.preventDefault();
-        e.stopPropagation();
-      }
-    },
-    true
-  );
+  // Page by roughly one viewport's worth, clamped to the scrollable range.
+  const page = (dir) => {
+    const max = grid.scrollWidth - grid.clientWidth;
+    const target = Math.min(max, Math.max(0, grid.scrollLeft + dir * grid.clientWidth * 0.8));
+    gsap.to(grid, { scrollLeft: target, duration: 0.6, ease: 'power3.out', overwrite: 'auto' });
+  };
+  leftBtn.addEventListener('click', () => page(-1));
+  rightBtn.addEventListener('click', () => page(1));
 }
 
 // Card hover: lift + shadow + image zoom, plus fade/caption reveal
