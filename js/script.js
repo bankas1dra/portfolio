@@ -1,5 +1,43 @@
 gsap.registerPlugin(ScrollTrigger);
 
+// Preloader: block the page behind a full-screen cover until every image on
+// it has actually finished loading, then fade the cover out. Only runs on a
+// real page load (this script re-executes on every hard navigation, but the
+// in-app router further down swaps <main> without reloading the script).
+(function preload() {
+  const el = document.getElementById('preloader');
+  if (!el) return;
+  const percentEl = el.querySelector('.preloader__percent');
+
+  const finish = () => {
+    el.classList.add('preloader--done');
+    el.addEventListener('transitionend', () => el.remove(), { once: true });
+  };
+
+  const imgs = Array.from(document.images);
+  const total = imgs.length;
+  if (total === 0) {
+    finish();
+    return;
+  }
+
+  let loaded = 0;
+  const onProgress = () => {
+    loaded += 1;
+    if (percentEl) percentEl.textContent = `${Math.round((loaded / total) * 100)}%`;
+    if (loaded >= total) finish();
+  };
+
+  imgs.forEach((img) => {
+    if (img.complete) { onProgress(); return; }
+    img.addEventListener('load', onProgress, { once: true });
+    img.addEventListener('error', onProgress, { once: true });
+  });
+
+  // Don't hold the site hostage if one image stalls (slow network, dead link)
+  setTimeout(finish, 8000);
+})();
+
 const EASE = 'power3.out';
 const HOVER_EASE = 'elastic.out(0.5, 0.35)';
 const HOVER_DURATION = 0.65;
