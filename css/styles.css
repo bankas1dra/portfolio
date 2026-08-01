@@ -55,6 +55,16 @@
   --font-display: 'GT Alpina Trial', 'Fraunces', Georgia, serif;
   --font-body: 'PP Neue Montreal', 'General Sans', Inter, Arial, sans-serif;
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* ---------- Custom cursors ----------
+     Hotspot (the 2nd/3rd number pair) is where the pointer's "active point"
+     sits within the 24x24 icon: near the tip for the default/pointer arrows,
+     dead-center for the direction badges since those aren't precision
+     pointers. Each has a native fallback in case the SVG fails to load. */
+  --cursor-default: url('../assets/cursors/cursor-default.svg') 4 2, auto;
+  --cursor-pointer: url('../assets/cursors/cursor-pointer.svg') 10 2, pointer;
+  --cursor-arrow-left: url('../assets/cursors/cursor-arrow-left.svg') 12 12, w-resize;
+  --cursor-arrow-right: url('../assets/cursors/cursor-arrow-right.svg') 12 12, e-resize;
 }
 
 * { box-sizing: border-box; }
@@ -67,11 +77,16 @@ body {
   color: var(--fg);
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
+  cursor: var(--cursor-default);
 }
 
 img { display: block; max-width: 100%; }
 
 a { color: inherit; text-decoration: none; }
+
+a, button {
+  cursor: var(--cursor-pointer);
+}
 
 /* ---------- Preloader ----------
    Blocks the site until every image on the page has finished loading (or
@@ -320,6 +335,10 @@ a { color: inherit; text-decoration: none; }
 }
 .work-grid img { -webkit-user-drag: none; user-drag: none; }
 .work-grid::-webkit-scrollbar { display: none; }
+/* Cards are links, so the global `a { cursor: pointer }` rule would win over
+   the grid's own grab cursor by direct-match specificity. Force them back to
+   whatever the grid (or its JS-driven inline style) currently says. */
+.work-grid .card { cursor: inherit; }
 .work-grid.is-dragging {
   cursor: grabbing;
   scroll-behavior: auto;

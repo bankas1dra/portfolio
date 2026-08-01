@@ -136,15 +136,48 @@ document.querySelectorAll('.link-copy').forEach((btn) => {
 // short, fast press through regardless of distance, fixes that.
 const DRAG_DISTANCE_THRESHOLD = 10;
 const DRAG_TIME_THRESHOLD = 250;
+const EDGE_ZONE = 120; // px — how close to the row's edge counts as "hovering the edge"
 
-const workGridDrag = { grid: null, isDown: false, startX: 0, startScroll: 0, startTime: 0, moved: false };
+const workGridDrag = { grid: null, isDown: false, startX: 0, startScroll: 0, startTime: 0, moved: false, lastClientX: null };
+
+// Which way (if either) the row can still scroll from its current position.
+function edgeAvailability(grid) {
+  const max = grid.scrollWidth - grid.clientWidth;
+  return {
+    left: grid.scrollLeft > 1,
+    right: grid.scrollLeft < max - 1,
+  };
+}
+
+// Hover-only cursor: arrow-left/arrow-right near an edge that still has more
+// content, otherwise clear the inline style and let the CSS grab cursor
+// (or, mid-drag, the .is-dragging grabbing cursor) show through.
+function updateGridCursor(grid, clientX) {
+  if (workGridDrag.isDown) return;
+  const rect = grid.getBoundingClientRect();
+  const relX = clientX - rect.left;
+  const { left, right } = edgeAvailability(grid);
+  if (relX < EDGE_ZONE && left) {
+    grid.style.cursor = 'var(--cursor-arrow-left)';
+  } else if (relX > rect.width - EDGE_ZONE && right) {
+    grid.style.cursor = 'var(--cursor-arrow-right)';
+  } else {
+    grid.style.cursor = '';
+  }
+}
 
 window.addEventListener('mouseup', () => {
   if (!workGridDrag.isDown) return;
   workGridDrag.isDown = false;
   workGridDrag.grid?.classList.remove('is-dragging', 'is-panning');
+  // The edge zones may have changed availability now that the drag moved the
+  // row, and this mouseup itself doesn't carry a position to re-check with.
+  if (workGridDrag.grid && workGridDrag.lastClientX !== null) {
+    updateGridCursor(workGridDrag.grid, workGridDrag.lastClientX);
+  }
 });
 window.addEventListener('mousemove', (e) => {
+  workGridDrag.lastClientX = e.clientX;
   if (!workGridDrag.isDown) return;
   const dx = e.pageX - workGridDrag.startX;
   const heldLong = Date.now() - workGridDrag.startTime > DRAG_TIME_THRESHOLD;
@@ -164,12 +197,26 @@ function initWorkGrid(root) {
   if (!grid) return;
   workGridDrag.grid = grid;
 
+  grid.addEventListener('mousemove', (e) => updateGridCursor(grid, e.clientX));
+  grid.addEventListener('mouseleave', () => {
+    if (!workGridDrag.isDown) grid.style.cursor = '';
+  });
+  // Scrolling (e.g. from a drag in progress) can change which edges still
+  // have content without the pointer itself moving — keep the cursor honest.
+  grid.addEventListener('scroll', () => {
+    if (workGridDrag.lastClientX !== null) updateGridCursor(grid, workGridDrag.lastClientX);
+  });
+
   grid.addEventListener('mousedown', (e) => {
     workGridDrag.isDown = true;
     workGridDrag.moved = false;
     workGridDrag.startX = e.pageX;
     workGridDrag.startScroll = grid.scrollLeft;
     workGridDrag.startTime = Date.now();
+    // Let the .is-dragging class's grabbing cursor take over — an inline
+    // arrow cursor left over from just before the press would otherwise
+    // outrank it.
+    grid.style.cursor = '';
     grid.classList.add('is-dragging');
   });
 
