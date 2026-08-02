@@ -137,7 +137,8 @@ function updateWorkEdges(grid, leftBtn, rightBtn) {
 function initWorkGrid(root) {
   const grid = root.querySelector('.work-grid');
   const wrap = root.querySelector('.work-grid-wrap');
-  if (!grid || !wrap) return;
+  const head = root.querySelector('#work .section__head');
+  if (!grid || !wrap || !head) return;
   const leftBtn = wrap.querySelector('.work-edge--left');
   const rightBtn = wrap.querySelector('.work-edge--right');
   if (!leftBtn || !rightBtn) return;
@@ -147,11 +148,21 @@ function initWorkGrid(root) {
   grid.addEventListener('scroll', refresh);
   window.addEventListener('resize', refresh);
 
-  // Page by roughly one viewport's worth, clamped to the scrollable range.
+  // Page by exactly the width of the section's own container (the row
+  // the "View All" link sits in), so each click lands the join between
+  // old and new cards flush on that edge instead of an arbitrary cut.
   const page = (dir) => {
     const max = grid.scrollWidth - grid.clientWidth;
-    const target = Math.min(max, Math.max(0, grid.scrollLeft + dir * grid.clientWidth * 0.8));
-    gsap.to(grid, { scrollLeft: target, duration: 0.6, ease: 'power3.out', overwrite: 'auto' });
+    const pageWidth = head.getBoundingClientRect().width;
+    const target = Math.min(max, Math.max(0, grid.scrollLeft + dir * pageWidth));
+    gsap.to(grid, {
+      scrollLeft: target,
+      duration: 0.6,
+      ease: 'power3.out',
+      overwrite: 'auto',
+      onUpdate: refresh,
+      onComplete: refresh,
+    });
   };
   leftBtn.addEventListener('click', () => page(-1));
   rightBtn.addEventListener('click', () => page(1));
