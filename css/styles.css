@@ -198,15 +198,6 @@ a, button {
 
 #work { padding-top: 56px; }
 
-/* Selected Work's 4 cards need 1960px to sit un-cropped, plus the section's
-   own 20px side padding = 2000px. On a screen wide enough to actually show
-   that without the section itself getting clipped, let it grow past the
-   site's usual 1240px container instead of forcing horizontal
-   scroll/paging when there's no real need for it. */
-@media (min-width: 2040px) {
-  #work { max-width: 2000px; }
-}
-
 .section__head {
   display: flex;
   align-items: baseline;
@@ -324,10 +315,18 @@ a, button {
 
 /* ---------- Selected Work: single horizontal row ----------
    No manual drag — the row scrolls natively (trackpad/wheel/touch), and
-   paging is done via the two edge buttons below (hover fade + arrow cursor,
+   paging is done via the two edge buttons below (hover fade + "More" hint,
    click to advance one "page"). */
 .work-grid-wrap {
   position: relative;
+  /* Left edge stays put (aligned with every other section's content), but
+     the row bleeds past the section's own 1240px container out to the
+     actual viewport edge — (100vw - 100%) is the total left+right margin
+     .section's auto-centering adds, so half of that is exactly the gap
+     between the container's right edge and the screen's right edge. Below
+     the container's own breakpoint (viewport ~= container width) that gap
+     is ~0, so this is a no-op and nothing changes there. */
+  margin-right: calc(-1 * (100vw - 100%) / 2);
 }
 .work-grid {
   display: flex;
