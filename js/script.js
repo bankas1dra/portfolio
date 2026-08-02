@@ -124,20 +124,45 @@ document.querySelectorAll('.link-copy').forEach((btn) => {
   });
 });
 
-// Selected Work row: the two header arrows just jump the row to its start
-// or end — the trailing "View all" card lives inside the row itself, so
-// scrolling to the natural end already lands it flush against the row's
-// own bleed edge; no separate boundary to line up with.
+// Selected Work row: the right arrow scrolls until the last card's right
+// edge lines up with the right arrow's own right edge. The left arrow just
+// moves back to the start — plain scroll, no cropping/alignment trick.
 function initWorkGrid(root) {
   const grid = root.querySelector('.work-grid');
   const nav = root.querySelector('.work-nav');
-  if (!grid || !nav) return;
+  const spacer = root.querySelector('.work-grid__spacer');
+  if (!grid || !nav || !spacer) return;
+  const rightArrow = nav.querySelector('.work-nav__btn[data-dir="1"]');
+  if (!rightArrow) return;
 
   nav.querySelectorAll('.work-nav__btn').forEach((btn) => {
     btn.addEventListener('click', () => {
       const dir = Number(btn.dataset.dir);
+      let target;
+
+      if (dir > 0) {
+        const gridRect = grid.getBoundingClientRect();
+        const boundaryWidth = rightArrow.getBoundingClientRect().right - gridRect.left;
+        const cards = grid.querySelectorAll('.card');
+        const lastCard = cards[cards.length - 1];
+        const r = lastCard.getBoundingClientRect();
+        const lastCardRight = r.left - gridRect.left + grid.scrollLeft + r.width;
+        target = lastCardRight - boundaryWidth;
+
+        // On wide screens the row's bleed already shows past the arrow's
+        // own position, so the natural scroll range falls short of the
+        // target — grow the spacer just enough to make it reachable
+        // instead of clamping short partway through the last card.
+        spacer.style.width = '0px';
+        const naturalMax = grid.scrollWidth - grid.clientWidth;
+        if (target > naturalMax) spacer.style.width = `${target - naturalMax}px`;
+      } else {
+        target = 0;
+        spacer.style.width = '0px';
+      }
+
       const max = grid.scrollWidth - grid.clientWidth;
-      const target = dir > 0 ? max : 0;
+      target = Math.min(max, Math.max(0, target));
       gsap.to(grid, { scrollLeft: target, duration: 0.6, ease: 'power3.out', overwrite: 'auto' });
     });
   });

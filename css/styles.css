@@ -362,24 +362,43 @@ a, button {
   .work-grid .card { width: calc(var(--card-w) * 0.72px); }
 }
 
+/* Extra scrollable room past the "View all" card, sized in JS only when
+   the right arrow's target would otherwise exceed the row's natural
+   scroll range (happens on wide screens, where bleed already shows past
+   the arrow's own position) — keeps the right-arrow click always able to
+   reach its target instead of clamping short partway through a card. */
+.work-grid__spacer {
+  flex: 0 0 auto;
+  width: 0;
+}
+
 .card--viewall {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  background: #2c2c2c;
+}
+.card--viewall__circle {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #2c2c2c;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #3a3a3a;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 40px;
+  color: var(--fg);
 }
 .card--viewall__label {
-  display: flex;
-  align-items: center;
-  gap: 12px;
   font-family: var(--font-display);
   font-style: italic;
   font-size: 32px;
   color: var(--fg);
   white-space: nowrap;
-}
-.card--viewall__arrow {
-  font-size: 40px;
 }
 
 /* ---------- Playground (masonry via columns) ---------- */
