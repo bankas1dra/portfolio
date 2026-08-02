@@ -314,28 +314,15 @@ a, button {
 }
 
 /* ---------- Selected Work: single horizontal row ----------
-   No manual drag — the row scrolls natively (trackpad/wheel/touch), and
-   paging is done via the two edge buttons below (hover fade + "More" hint,
-   click to advance one "page"). */
-.work-grid-wrap {
-  position: relative;
-  /* No bleed past the section's own 1240px container: the row stays
-     exactly as wide as "View All" sits above it. A wider row (bleeding
-     toward the viewport edge) would make the paging button's "land the
-     last card flush on View All" target unreachable on wide screens —
-     the visible area would already show past that edge before any click,
-     so there'd be nothing left to scroll forward into. */
-}
+   Scrolls natively (trackpad/touch drag), plus a wheel handler in JS
+   (initWorkGrid) that redirects the mouse wheel to horizontal scroll
+   while the cursor is over the row, so a plain mouse can browse it too. */
 .work-grid {
   display: flex;
   flex-wrap: nowrap;
   align-items: flex-end;
   gap: var(--gap);
   overflow-x: auto;
-  /* No scroll-behavior:smooth here — GSAP animates scrollLeft directly for
-     the edge-button paging, and the two fighting over the same property
-     produced inconsistent, overshooting end positions. Native scroll
-     (wheel/trackpad/touch) stays instant, which is expected for those. */
   scrollbar-width: none;
   -ms-overflow-style: none;
   /* overflow-x:auto forces overflow-y to act as auto too (per spec, an axis
@@ -356,64 +343,6 @@ a, button {
 
 @media (max-width: 560px) {
   .work-grid .card { width: calc(var(--card-w) * 0.72px); }
-}
-
-/* Edge paging buttons: sit on top of the row at each end, full height. Inert
-   and invisible until JS marks that edge ".is-available" (there's actually
-   more to page to that side); even then the fade and "More" hint only show
-   up on hover, but the button already covers — and so blocks clicks/hover
-   to — whatever card is currently underneath it. Desktop-with-a-mouse only:
-   touch devices get native swipe-scroll instead of hover affordances. */
-.work-edge {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 160px;
-  max-width: 25%;
-  border: none;
-  padding: 0;
-  background: none;
-  opacity: 0;
-  pointer-events: none;
-  z-index: 2;
-  transition: opacity 0.3s var(--ease);
-}
-@media (hover: hover) and (pointer: fine) {
-  .work-edge.is-available { pointer-events: auto; }
-  .work-edge.is-available:hover { opacity: 1; }
-}
-.work-edge--left {
-  left: 0;
-  background: linear-gradient(to right, var(--bg) 0%, transparent 100%);
-}
-.work-edge--right {
-  right: 0;
-  background: linear-gradient(to left, var(--bg) 0%, transparent 100%);
-}
-.work-edge__hint {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  width: 62px;
-}
-.work-edge__hint span {
-  font-family: var(--font-display);
-  font-style: italic;
-  font-size: 20px;
-  color: #fff;
-  text-align: center;
-}
-.work-edge__icon {
-  width: 32px;
-  height: 32px;
-}
-.work-edge__icon--right {
-  transform: scaleX(-1);
 }
 
 /* ---------- Playground (masonry via columns) ---------- */

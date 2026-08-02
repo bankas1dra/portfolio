@@ -124,64 +124,21 @@ document.querySelectorAll('.link-copy').forEach((btn) => {
   });
 });
 
-// Selected Work row: no manual drag. The row itself scrolls natively
-// (trackpad/wheel/touch); paging is done via the two edge buttons, which are
-// real elements sitting on top of the row — no mouseup/click timing games,
-// so a click on a card is just a click on a card.
-function updateWorkEdges(grid, leftBtn, rightBtn) {
-  const max = grid.scrollWidth - grid.clientWidth;
-  leftBtn.classList.toggle('is-available', grid.scrollLeft > 1);
-  rightBtn.classList.toggle('is-available', grid.scrollLeft < max - 1);
-}
-
+// Selected Work row: no manual drag, no paging buttons. The row scrolls
+// natively on trackpad/touch; this just redirects the mouse wheel to
+// horizontal scroll while the cursor is over the row, since a plain mouse
+// wheel is vertical-only and wouldn't otherwise move a horizontal list.
 function initWorkGrid(root) {
   const grid = root.querySelector('.work-grid');
-  const wrap = root.querySelector('.work-grid-wrap');
-  const head = root.querySelector('#work .section__head');
-  if (!grid || !wrap || !head) return;
-  const leftBtn = wrap.querySelector('.work-edge--left');
-  const rightBtn = wrap.querySelector('.work-edge--right');
-  if (!leftBtn || !rightBtn) return;
+  if (!grid) return;
 
-  const refresh = () => updateWorkEdges(grid, leftBtn, rightBtn);
-  refresh();
-  grid.addEventListener('scroll', refresh);
-  window.addEventListener('resize', refresh);
-
-  // Just two resting points, per the Figma spec (node 658-19333): flush at
-  // the start, or flush at the end — one click covers the whole distance
-  // rather than stepping through intermediate cards. The end point lands
-  // the last card's right edge flush on the "View All" container's own
-  // edge; the row never renders wider than that edge (see .work-grid-wrap),
-  // so this is always reachable regardless of viewport width.
-  const page = (dir) => {
-    const max = grid.scrollWidth - grid.clientWidth;
-    let target;
-
-    if (dir > 0) {
-      const gridRect = grid.getBoundingClientRect();
-      const boundaryWidth = head.getBoundingClientRect().right - gridRect.left;
-      const cards = grid.querySelectorAll('.card');
-      const lastCard = cards[cards.length - 1];
-      const r = lastCard.getBoundingClientRect();
-      const lastCardRight = r.left - gridRect.left + grid.scrollLeft + r.width;
-      target = lastCardRight - boundaryWidth;
-    } else {
-      target = 0;
-    }
-
-    target = Math.min(max, Math.max(0, target));
-    gsap.to(grid, {
-      scrollLeft: target,
-      duration: 0.6,
-      ease: 'power3.out',
-      overwrite: 'auto',
-      onUpdate: refresh,
-      onComplete: refresh,
-    });
-  };
-  leftBtn.addEventListener('click', () => page(-1));
-  rightBtn.addEventListener('click', () => page(1));
+  grid.addEventListener('wheel', (e) => {
+    // Trackpads send meaningful deltaX already — let that pass through as
+    // native horizontal scroll instead of doubling up on it.
+    if (Math.abs(e.deltaX) >= Math.abs(e.deltaY)) return;
+    e.preventDefault();
+    grid.scrollLeft += e.deltaY;
+  }, { passive: false });
 }
 
 // Card hover: lift + shadow + image zoom, plus fade/caption reveal
