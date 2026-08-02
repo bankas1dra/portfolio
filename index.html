@@ -43,7 +43,10 @@
     <section class="section" id="work">
       <div class="section__head reveal">
         <h2>Selected Work</h2>
-        <a href="projects.html" class="section__all">View All</a>
+        <div class="work-nav">
+          <button type="button" class="work-nav__btn" data-dir="-1" aria-label="Show previous work">←</button>
+          <button type="button" class="work-nav__btn" data-dir="1" aria-label="Show more work">→</button>
+        </div>
       </div>
 
       <div class="work-grid">
@@ -98,6 +101,10 @@
             <p class="card__client">T-Bank</p>
           </div>
         </div>
+        </a>
+
+        <a class="card card--viewall reveal" href="projects.html" style="--card-w:287;--card-h:518">
+          <span class="card--viewall__label">View all <span class="card--viewall__arrow">→</span></span>
         </a>
 
       </div>

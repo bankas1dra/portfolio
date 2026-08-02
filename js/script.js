@@ -124,21 +124,23 @@ document.querySelectorAll('.link-copy').forEach((btn) => {
   });
 });
 
-// Selected Work row: no manual drag, no paging buttons. The row scrolls
-// natively on trackpad/touch; this just redirects the mouse wheel to
-// horizontal scroll while the cursor is over the row, since a plain mouse
-// wheel is vertical-only and wouldn't otherwise move a horizontal list.
+// Selected Work row: the two header arrows just jump the row to its start
+// or end — the trailing "View all" card lives inside the row itself, so
+// scrolling to the natural end already lands it flush against the row's
+// own bleed edge; no separate boundary to line up with.
 function initWorkGrid(root) {
   const grid = root.querySelector('.work-grid');
-  if (!grid) return;
+  const nav = root.querySelector('.work-nav');
+  if (!grid || !nav) return;
 
-  grid.addEventListener('wheel', (e) => {
-    // Trackpads send meaningful deltaX already — let that pass through as
-    // native horizontal scroll instead of doubling up on it.
-    if (Math.abs(e.deltaX) >= Math.abs(e.deltaY)) return;
-    e.preventDefault();
-    grid.scrollLeft += e.deltaY;
-  }, { passive: false });
+  nav.querySelectorAll('.work-nav__btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const dir = Number(btn.dataset.dir);
+      const max = grid.scrollWidth - grid.clientWidth;
+      const target = dir > 0 ? max : 0;
+      gsap.to(grid, { scrollLeft: target, duration: 0.6, ease: 'power3.out', overwrite: 'auto' });
+    });
+  });
 }
 
 // Card hover: lift + shadow + image zoom, plus fade/caption reveal
