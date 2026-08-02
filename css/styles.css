@@ -342,11 +342,12 @@ a, button {
   -ms-overflow-style: none;
   /* overflow-x:auto forces overflow-y to act as auto too (per spec, an axis
      can't stay "visible" while the other isn't), which would otherwise clip
-     the hover box-shadow at the row's top/bottom edge. Pad the scroll area
-     and cancel the padding with a matching negative margin so the shadow
-     has room without shifting surrounding layout. */
-  padding: 24px 0 90px;
-  margin: -24px 0 -90px;
+     the hover box-shadow at the row's top/bottom/left edges (the first
+     card's shadow has nowhere to bleed into on the left otherwise). Pad the
+     scroll area and cancel the padding with a matching negative margin so
+     the shadow has room without shifting surrounding layout. */
+  padding: 24px 0 90px 48px;
+  margin: -24px 0 -90px -48px;
 }
 .work-grid img { -webkit-user-drag: none; user-drag: none; }
 .work-grid::-webkit-scrollbar { display: none; }

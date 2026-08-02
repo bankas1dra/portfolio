@@ -137,8 +137,8 @@ function updateWorkEdges(grid, leftBtn, rightBtn) {
 function initWorkGrid(root) {
   const grid = root.querySelector('.work-grid');
   const wrap = root.querySelector('.work-grid-wrap');
-  const head = root.querySelector('#work .section__head');
-  if (!grid || !wrap || !head) return;
+  const section = root.querySelector('#work');
+  if (!grid || !wrap || !section) return;
   const leftBtn = wrap.querySelector('.work-edge--left');
   const rightBtn = wrap.querySelector('.work-edge--right');
   if (!leftBtn || !rightBtn) return;
@@ -148,13 +148,40 @@ function initWorkGrid(root) {
   grid.addEventListener('scroll', refresh);
   window.addEventListener('resize', refresh);
 
-  // Page by exactly the width of the section's own container (the row
-  // the "View All" link sits in), so each click lands the join between
-  // old and new cards flush on that edge instead of an arbitrary cut.
+  // Page by snapping to whichever card edge lands flush on the row's own
+  // edge — on the right, that's the same gutter width as the section's
+  // left inset, mirrored off the viewport's right edge (not the "View
+  // All" container's fixed 1240px edge) — rather than a fixed distance,
+  // which rarely lines up with an actual card boundary since the cards
+  // are all different widths.
   const page = (dir) => {
     const max = grid.scrollWidth - grid.clientWidth;
-    const pageWidth = head.getBoundingClientRect().width;
-    const target = Math.min(max, Math.max(0, grid.scrollLeft + dir * pageWidth));
+    const gridRect = grid.getBoundingClientRect();
+    const gutter = parseFloat(getComputedStyle(section).paddingLeft) || 0;
+    const rightBoundaryX = document.documentElement.clientWidth - gutter;
+    const boundaryWidth = rightBoundaryX - gridRect.left;
+    const cards = Array.from(grid.querySelectorAll('.card'));
+    let target;
+
+    if (dir > 0) {
+      const boundary = grid.scrollLeft + boundaryWidth;
+      const rightEdges = cards
+        .map((card) => {
+          const r = card.getBoundingClientRect();
+          return r.left - gridRect.left + grid.scrollLeft + r.width;
+        })
+        .sort((a, b) => a - b);
+      const nextEdge = rightEdges.find((edge) => edge > boundary + 1);
+      target = nextEdge === undefined ? max : nextEdge - boundaryWidth;
+    } else {
+      const leftEdges = cards
+        .map((card) => card.getBoundingClientRect().left - gridRect.left + grid.scrollLeft)
+        .sort((a, b) => b - a);
+      const prevEdge = leftEdges.find((edge) => edge < grid.scrollLeft - 1);
+      target = prevEdge === undefined ? 0 : prevEdge;
+    }
+
+    target = Math.min(max, Math.max(0, target));
     gsap.to(grid, {
       scrollLeft: target,
       duration: 0.6,
