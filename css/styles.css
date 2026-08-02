@@ -319,14 +319,12 @@ a, button {
    click to advance one "page"). */
 .work-grid-wrap {
   position: relative;
-  /* Left edge stays put (aligned with every other section's content), but
-     the row bleeds past the section's own 1240px container out to the
-     actual viewport edge — (100vw - 100%) is the total left+right margin
-     .section's auto-centering adds, so half of that is exactly the gap
-     between the container's right edge and the screen's right edge. Below
-     the container's own breakpoint (viewport ~= container width) that gap
-     is ~0, so this is a no-op and nothing changes there. */
-  margin-right: calc(-1 * (100vw - 100%) / 2);
+  /* No bleed past the section's own 1240px container: the row stays
+     exactly as wide as "View All" sits above it. A wider row (bleeding
+     toward the viewport edge) would make the paging button's "land the
+     last card flush on View All" target unreachable on wide screens —
+     the visible area would already show past that edge before any click,
+     so there'd be nothing left to scroll forward into. */
 }
 .work-grid {
   display: flex;
