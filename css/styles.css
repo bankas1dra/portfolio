@@ -65,6 +65,7 @@
   --cursor-pointer: url('../assets/cursors/cursor-pointer.svg') 10 2, pointer;
   --cursor-arrow-left: url('../assets/cursors/cursor-arrow-left.svg') 12 12, w-resize;
   --cursor-arrow-right: url('../assets/cursors/cursor-arrow-right.svg') 12 12, e-resize;
+  --cursor-drag: url('../assets/cursors/cursor-drag.svg') 10 10, ew-resize;
 }
 
 * { box-sizing: border-box; }
@@ -447,7 +448,7 @@ a, button {
   padding: 0 0 2px;
   background: none;
   color: inherit;
-  cursor: pointer;
+  cursor: var(--cursor-pointer);
 }
 
 @media (max-width: 480px) {
@@ -579,7 +580,7 @@ a, button {
   border-radius: 20px;
   overflow: hidden;
   aspect-ratio: 1240 / 666;
-  cursor: ew-resize;
+  cursor: var(--cursor-drag);
   user-select: none;
   /* Matches the block's own radial gradient fill in Figma — the before/
      after shots don't quite reach the container edges, so this shows in
@@ -642,7 +643,6 @@ a, button {
   pointer-events: none;
   z-index: 3;
 }
-.case-compare__grip img { width: 24px; height: 24px; }
 .case-compare__grip span {
   font-family: var(--font-body);
   font-weight: 500;
