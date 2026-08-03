@@ -127,13 +127,24 @@ document.querySelectorAll('.link-copy').forEach((btn) => {
 // Selected Work row: the right arrow scrolls until the last card's right
 // edge lines up with the right arrow's own right edge. The left arrow just
 // moves back to the start — plain scroll, no cropping/alignment trick.
+// Either arrow goes inactive once there's nowhere left for it to move to.
 function initWorkGrid(root) {
   const grid = root.querySelector('.work-grid');
   const nav = root.querySelector('.work-nav');
   const spacer = root.querySelector('.work-grid__spacer');
   if (!grid || !nav || !spacer) return;
   const rightArrow = nav.querySelector('.work-nav__btn[data-dir="1"]');
-  if (!rightArrow) return;
+  const leftArrow = nav.querySelector('.work-nav__btn[data-dir="-1"]');
+  if (!rightArrow || !leftArrow) return;
+
+  const refresh = () => {
+    const max = grid.scrollWidth - grid.clientWidth;
+    leftArrow.classList.toggle('is-inactive', grid.scrollLeft <= 1);
+    rightArrow.classList.toggle('is-inactive', grid.scrollLeft >= max - 1);
+  };
+  refresh();
+  grid.addEventListener('scroll', refresh);
+  window.addEventListener('resize', refresh);
 
   nav.querySelectorAll('.work-nav__btn').forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -163,7 +174,14 @@ function initWorkGrid(root) {
 
       const max = grid.scrollWidth - grid.clientWidth;
       target = Math.min(max, Math.max(0, target));
-      gsap.to(grid, { scrollLeft: target, duration: 0.6, ease: 'power3.out', overwrite: 'auto' });
+      gsap.to(grid, {
+        scrollLeft: target,
+        duration: 0.6,
+        ease: 'power3.out',
+        overwrite: 'auto',
+        onUpdate: refresh,
+        onComplete: refresh,
+      });
     });
   });
 }
